@@ -15,13 +15,33 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
 
-      - name: Install dependencies
+      - name: Restore node_modules cache
+        id: cache-node-modules
+        uses: actions/cache/restore@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies (if cache miss)
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: npm ci
+
+      - name: Save node_modules cache
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
 
       - name: Build app
         run: npm run build
+
+      - name: Save Next build output
+        uses: actions/cache/save@v4
+        with:
+          path: .next
+          key: ${{ runner.os }}-next-${{ github.sha }}
 
   e2e:
     name: Cypress E2E
@@ -35,14 +55,28 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
 
-      - name: Install dependencies
+      - name: Restore node_modules cache
+        id: cache-node-modules
+        uses: actions/cache/restore@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies (if cache miss)
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: npm ci
+
+      - name: Restore Next build output
+        id: cache-next
+        uses: actions/cache/restore@v4
+        with:
+          path: .next
+          key: ${{ runner.os }}-next-${{ github.sha }}
 
       - name: Run Cypress E2E
         uses: cypress-io/github-action@v7
         with:
           install: false
-          start: npm run dev
+          start: npm run start
           wait-on: 'http://localhost:3000'
