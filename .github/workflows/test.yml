@@ -34,6 +34,24 @@ jobs:
           path: node_modules
           key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
 
+      - name: Restore Cypress binary cache
+        id: cache-cypress
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/Cypress
+          key: ${{ runner.os }}-cypress-binary-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Cypress binary (if cache miss)
+        if: steps.cache-cypress.outputs.cache-hit != 'true'
+        run: npx cypress install
+
+      - name: Save Cypress binary cache
+        if: steps.cache-cypress.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/Cypress
+          key: ${{ runner.os }}-cypress-binary-${{ hashFiles('package-lock.json') }}
+
       - name: Build app
         run: npm run build
 
@@ -67,6 +85,17 @@ jobs:
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: npm ci
 
+      - name: Restore Cypress binary cache
+        id: cache-cypress
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/Cypress
+          key: ${{ runner.os }}-cypress-binary-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Cypress binary (if cache miss)
+        if: steps.cache-cypress.outputs.cache-hit != 'true'
+        run: npx cypress install
+
       - name: Restore Next build output
         id: cache-next
         uses: actions/cache/restore@v4
@@ -79,4 +108,4 @@ jobs:
         with:
           install: false
           start: npm run start
-          wait-on: 'http://localhost:3000'
+          wait-on: "http://localhost:3000"
