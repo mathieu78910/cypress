@@ -8,6 +8,6 @@ jobs:
     name: Build 1
     runs-on: ubuntu-latest
     steps:
-      - run: ls -lah
       - uses: actions/checkout@v6
-      - run: ls -lah
+      - run: npm install
+      - run: npm run build
